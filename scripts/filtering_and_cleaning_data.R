@@ -36,11 +36,14 @@ expanded <- expanded[!is.na(expanded$cost),]
 
 # Now, move costs into "billions of dollars" unit
 expanded$cost_bil <- (expanded$cost/1000000000)
-sum(expanded$cost_bil)
+
+# First, make sure we retain only "country scale" data
+expanded_country <- expanded[expanded$Spatial_scale2 %in% c("Country"),]
+# This is the totoal economic impact from 
+sum(expanded_country$cost_bil)
 
 # Keep only measurements that are "observed" and "high quality"
-expanded_observed <- expanded[expanded$Implementation %in% c("Observed"),]
-expanded_observed_and_high <- expanded_observed[expanded_observed$Method_reliability %in% c("High"),]
+expanded_observed_and_country <- expanded_country[expanded_country$Implementation %in% c("Observed"),]
+expanded_observed_and_high_and_country <- expanded_observed_and_country[expanded_observed_and_country$Method_reliability %in% c("High"),]
 
-dim(expanded_observed_and_high)
-sum(expanded_observed_and_high$cost_bil)
+sum(expanded_observed_and_high_and_country$cost_bil)

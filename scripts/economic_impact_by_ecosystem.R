@@ -5,14 +5,14 @@ library(cowplot)
 source("/Users/robcrystalornelas/Desktop/research/INVACOST_NorthAmerica/invacost_north_america/scripts/filtering_and_cleaning_data.R")
 
 # Here are the data that we need: both highly reliable and directly observed measurements
-head(expanded_observed_and_high)
+head(expanded_observed_and_high_and_country)
 
-levels(expanded_observed_and_high$Environment)
+levels(expanded_observed_and_high_and_country$Environment)
 
+class(expanded_observed_and_high_and_country$cost_bil)
 grouped_environment <-
-  expanded_observed_and_high %>% group_by(Environment) %>%
-  summarise(cost_by_environment = sum(cost_bil))
-grouped_environment
+  expanded_observed_and_high_and_country %>% group_by(Environment) %>%
+  summarise(cost_by_environment = sum(numeric(cost_bil)))
 
 gg <-
   ggplot(grouped_environment,
