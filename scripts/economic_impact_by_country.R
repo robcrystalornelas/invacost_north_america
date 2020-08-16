@@ -2,10 +2,10 @@ library(tidyverse)
 library(cowplot)
 library(ggplot2)
 
-source("/Users/robcrystalornelas/Desktop/research/INVACOST_NorthAmerica/invacost_north_america/scripts/filtering_and_cleaning_data.R")
+source("scripts/filtering_and_cleaning_data.R")
 
 # read in research effort data
-research_effort <- read.csv("/Users/robcrystalornelas/Desktop/research/INVACOST_NorthAmerica/invacost_north_america/data/research_effort_north_america.csv", head = TRUE)
+research_effort <- read.csv("data/research_effort_north_america.csv", head = TRUE)
 research_effort <- research_effort[,c(1,4)]
 research_effort
 # we are going to use the final column "research effort as expenditure in US$"

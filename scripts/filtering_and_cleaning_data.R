@@ -44,6 +44,14 @@ sum(expanded_country$cost_bil)
 
 # Keep only measurements that are "observed" and "high quality"
 expanded_observed_and_country <- expanded_country[expanded_country$Implementation %in% c("Observed"),]
+dim(expanded_observed_and_country)
 expanded_observed_and_high_and_country <- expanded_observed_and_country[expanded_observed_and_country$Method_reliability %in% c("High"),]
+dim(expanded_observed_and_high_and_country)
 
 sum(expanded_observed_and_high_and_country$cost_bil)
+
+## What if we used only high and observed
+expanded_high <- expanded[expanded$Implementation %in% c("Observed"),]
+dim(expanded_high)
+expanded_high_and_observed <- expanded_high[expanded_high$Method_reliability %in% c("High"),]
+dim(expanded_high_and_observed)

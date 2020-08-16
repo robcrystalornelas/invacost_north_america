@@ -2,7 +2,7 @@ library(dplyr)
 library(ggplot2)
 library(cowplot)
 
-source("/Users/robcrystalornelas/Desktop/research/INVACOST_NorthAmerica/invacost_north_america/scripts/filtering_and_cleaning_data.R")
+source("scripts/filtering_and_cleaning_data.R")
 
 # Here are the data that we need: both highly reliable and directly observed measurements
 head(expanded_observed_and_high_and_country)
