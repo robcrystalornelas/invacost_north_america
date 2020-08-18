@@ -12,7 +12,7 @@ unique(expanded_observed_and_high_and_country$Environment)
 # Make a table of the  costs grouped by environment
 aggregated_environment_costs <- aggregate(cost_bil~Environment,data=expanded_observed_and_high_and_country,FUN="sum")
 aggregated_environment_costs
-
+plyr::count(expanded_observed_and_high_and_country$Environment)
 enviro_costs_plot <-
   ggplot(aggregated_environment_costs,
          aes(x = reorder(Environment, -cost_bil), y = cost_bil))
