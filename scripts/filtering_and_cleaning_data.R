@@ -4,8 +4,7 @@ library(ggplot2)
 library(invacost)
 
 # Bring in invacost data
-#invacost <- read.csv("/Users/robcrystalornelas/Desktop/research/INVACOST_NorthAmerica/invacost_north_america/data/invacost_database_2-1.csv", header = TRUE)
-data(invacost) # Emma: I'm importing directly from the new invacost package
+data(invacost) # Importing directly from the new invacost package
 
 # Subset only the observations in North America
 north_america_non_expanded <-
@@ -45,6 +44,14 @@ sum(expanded_country$cost_bil)
 
 # Keep only measurements that are "observed" and "high quality"
 expanded_observed_and_country <- expanded_country[expanded_country$Implementation %in% c("Observed"),]
+dim(expanded_observed_and_country)
 expanded_observed_and_high_and_country <- expanded_observed_and_country[expanded_observed_and_country$Method_reliability %in% c("High"),]
+dim(expanded_observed_and_high_and_country)
 
 sum(expanded_observed_and_high_and_country$cost_bil)
+
+## What if we used only high and observed
+expanded_high <- expanded[expanded$Implementation %in% c("Observed"),]
+dim(expanded_high)
+expanded_high_and_observed <- expanded_high[expanded_high$Method_reliability %in% c("High"),]
+dim(expanded_high_and_observed)

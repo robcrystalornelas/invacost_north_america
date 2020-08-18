@@ -2,14 +2,15 @@ library(dplyr)
 library(ggplot2)
 library(invacost)
 
-source("/Users/robcrystalornelas/Desktop/research/INVACOST_NorthAmerica/invacost_north_america/scripts/filtering_and_cleaning_data.R")
+source("scripts/filtering_and_cleaning_data.R")
 
 # See all the different levels of phyla within the database
-levels(expanded_observed_and_high$Phylum)
+unique(expanded_observed_and_high_and_country$Phylum)
 
+# Broad taxonomic groups
 # Subset inverts
 inverts <-
-  expanded_observed_and_high[expanded_observed_and_high$Phylum %in% c(
+  expanded_observed_and_high_and_country[expanded_observed_and_high_and_country$Phylum %in% c(
     "Arthropoda",
     "Annelida",
     "Ctenophora",
@@ -23,24 +24,25 @@ inverts <-
     "Nematoda/unknown"
   ),]
 sum(inverts$cost_bil)
+dim(inverts)
 
 # subset plants
 plants <-
-  expanded_observed_and_high[expanded_observed_and_high$Phylum %in% c("Chlorophyta",
+  expanded_observed_and_high_and_country[expanded_observed_and_high_and_country$Phylum %in% c("Chlorophyta",
                                                                       "Tracheophyta",
                                                                       "Haptophyta",
                                                                       "Tracheophyta/Unspecified"),]
 sum(plants$cost_bil)
-
+dim(plants)
 # Subset verts
 verts <-
-  expanded_observed_and_high[expanded_observed_and_high$Phylum %in% c("Chordata",
+  expanded_observed_and_high_and_country[expanded_observed_and_high_and_country$Phylum %in% c("Chordata",
                                                                       "Chordata/Diverse"),]
 sum(verts$cost_bil)
-
+dim(verts)
 # Anything else not captured by above categories
 other <-
-  expanded_observed_and_high[expanded_observed_and_high$Phylum %in% c(
+  expanded_observed_and_high_and_country[expanded_observed_and_high_and_country$Phylum %in% c(
     "Chytridiomycota",
     "Diverse/Unspecified",
     "Haptophyta",
@@ -61,7 +63,8 @@ other <-
     "Peploviricota",
     "Picornavirales"
   ),]
-
 sum(other$cost_bil)
-
-
+dim(other)
+# More minor taxonomic groupings
+cost_by_fine_taxonomic_groups <- aggregate(expanded_observed_and_high_and_country$cost_bil, by=list(Category=expanded_observed_and_high_and_country$Phylum), FUN=sum)
+cost_by_fine_taxonomic_groups[order(cost_by_fine_taxonomic_groups$x),]
