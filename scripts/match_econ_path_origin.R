@@ -1,13 +1,13 @@
 # code to link invacost north america data with economic predictors and CABI variables
 #written by Emma J Hudgins, Aug 11 2020
 
-source("scripts/filtering_and_cleaning_data.R")
+source("filtering_and_cleaning_data.R")
 library(countrycode)
 library(wbstats)
 data<-expanded_observed_and_high_and_country
 data$Species<-gsub("spp.","sp.", data$Species) # 51 species + Diverse/Unspecified, several not resolved to the species level
 
-pathways<-read.csv('scripts/intro_pathways_vectors_all.csv')
+pathways<-read.csv('intro_pathways_vectors_all.csv')
 colnames(pathways)[1]<-"Species"
 
 spp_dat<-data.frame(Species=unique(data$Species))
@@ -17,13 +17,13 @@ colSums(pathways[,2:47]/rowSums(pathways[,2:47], na.rm=T), na.rm=T) # assuming e
 colSums(pathways[,48:76]/rowSums(pathways[,48:76], na.rm=T), na.rm=T)
 #could conceivably group into smaller set of levels, aggregate similar to origin
 
-origins<-read.csv('cripts/intro_pathways_origins_all.csv')
+origins<-read.csv('intro_pathways_origins_all.csv')
 colnames(origins)[1]<-"Species"
 origin_dat<-merge(spp_dat, origins, all.x=T)
 
 data<-merge(data, origin_dat[,c(1,10)], by="Species")
 
-health_spend<-read.csv('scripts/CHE by GDP_by country.csv')
+health_spend<-read.csv('CHE by GDP_by country.csv')
 health_spend<-health_spend[2:nrow(health_spend),]
 
 health_spend$codes2<-countrycode(health_spend$X, 'country.name', 'iso3c')
@@ -31,7 +31,7 @@ data$codes2<-countrycode(data$Official_country, 'country.name', 'iso3c')
 data<-merge(data,health_spend[,c(2,20)], "codes2") # WHO % gdp spent on health in 2017 by country (could alternatively match to 'impact_year')
 colnames(data)[ncol(data)]<-"health_spend"
 
-ind_spend<-read.csv('scripts/API_NV.AGR.TOTL.CD_DS2_en_csv_v2_1121017.csv')
+ind_spend<-read.csv('API_NV.AGR.TOTL.CD_DS2_en_csv_v2_1121017.csv')
 ind_spend$codes2<-countrycode(ind_spend$Country.Name, 'country.name', 'iso3c')
 data<-merge(data,ind_spend[,c(62,65)], "codes2" ) #industry value added for agriculture, fisheries, forestries in 2017 (could alternatively match to 'impact_year')
 colnames(data)[ncol(data)]<-"ind_spend"
@@ -51,9 +51,22 @@ colnames(stwist)[3]<-'Species'
 colnames(stwist)[1]<-"Official_country"
 stwist$Official_country<-gsub("United States of America", "USA", stwist$Official_country)
 stwist<-subset(stwist, Official_country%in%data$Official_country)
-
+length(unique(stwist$Species[which(stwist$eventDat>=1970)]))
+hist(subset(stwist$eventDate, stwist$eventDate>1800), xlim=c(1800,2040), breaks=20, xlab="sTwist year of first record", main=NULL) #32 before 1800
 #Completeness of invacost based on stwist 14754 total species
  # 51 species + Diverse/Unspecified, several not resolved to the species level
+library(vioplot)
+stwist_s<-subset(stwist, eventDate>=1800)
+vioplot(stwist_s$eventDate~stwist_s$code, col=viridis(4), outer=T, horizontal=T) #32 before 1800
+title(xlab="sTwist year of first record")
+vioplot(data$Impact_year~data$codes2, col=viridis(4), outer=T,  horizontal=T) #32 before 1800
+points(y=rep(2,3),x=c(data$Impact_year[which(data$codes2=="CUB")]), bg=viridis(4)[2], pch=21, col="black")
+title(xlab="Invacost impact year")
+
+table(stwist$code)
+data2<-aggregate(data, by=list(data$Species, data$codes2),FUN =  unique)
+table(data2$codes2)
+table(stwist$eventDate)
 length(which(stwist$Species%in%data$Species))/length(unique(stwist$Species))
 
 
