@@ -5,7 +5,7 @@ library(invacost)
 
 # Bring in invacost data
 data(invacost) # Importing directly from the new invacost package
-
+unique(invacost$Official_country)
 # Subset only the observations in North America
 north_america_non_expanded <-
   invacost[invacost$Official_country %in% c(
@@ -21,7 +21,7 @@ north_america_non_expanded <-
     "Mariana",
     "Caribbean"
   ), ]
-
+unique(north_america_non_expanded$Official_country)
 # First, if we want to do any temporal trend analyses, we've got to separate out impacts for each year they occurred
 expanded <- expandYearlyCosts(north_america_non_expanded,
                               startcolumn = "Probable_starting_year_low_margin",

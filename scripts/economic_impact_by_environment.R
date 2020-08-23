@@ -41,5 +41,5 @@ enviro_costs_plot
 
 
 # Some other ways of identifying costs
-aggregate(cost_bil~Environment,data=expanded_observed_and_high,FUN="sum")
-aggregate(cost_bil~Environment,data=expanded_observed_and_high,FUN="length")
+aggregate(cost_bil~Environment,data=expanded_observed_and_high_and_country,FUN="sum")
+aggregate(cost_bil~Environment,data=expanded_observed_and_high_and_country,FUN="length")
