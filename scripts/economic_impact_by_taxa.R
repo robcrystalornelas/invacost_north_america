@@ -65,6 +65,7 @@ other <-
   ),]
 sum(other$cost_bil)
 dim(other)
+
 # More minor taxonomic groupings
 cost_by_fine_taxonomic_groups <- aggregate(expanded_observed_and_high_and_country$cost_bil, by=list(Category=expanded_observed_and_high_and_country$Phylum), FUN=sum)
 cost_by_fine_taxonomic_groups[order(cost_by_fine_taxonomic_groups$x),]

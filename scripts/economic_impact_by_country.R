@@ -11,11 +11,14 @@ research_effort <- research_effort[,c(1,6)]
 research_effort
 # we are going to use the final column "research effort as expenditure in US$"
 
-unique(expanded_observed_and_high_and_country$Official_country)
-
 # First, sum up all the costs by country
-aggregated_country_costs<-aggregate(cost_bil~Official_country,data=expanded_observed_and_high_and_country,FUN="sum")
-aggregate(cost_bil~Official_country,data=expanded_observed_and_high_and_country,FUN="length")
+
+aggregated_country_costs <-
+  aggregate(cost_bil ~ Official_country, data = expanded_observed_and_high_and_country, FUN =
+              "sum")
+aggregated_country_costs
+aggregate(cost_bil ~ Official_country, data = expanded_observed_and_high_and_country, FUN =
+            "length")
 
 # create dataframe using the newly scaled costs
 # First, to prepare for joinin costs, and research effort dfs, need to rename
@@ -37,14 +40,14 @@ country_costs_plot <-
   country_costs_plot + geom_bar(stat = "identity", fill = "#453781FF")
 country_costs_plot <- country_costs_plot + theme_cowplot()
 country_costs_plot <-
-  country_costs_plot + ylab("Economic impact scaled by science research funding")
+  country_costs_plot + ylab("Economic cost / Science research spending (2017 US$)")
 country_costs_plot <- country_costs_plot + xlab("Country")
 country_costs_plot
 country_costs_plot <-
   country_costs_plot + theme(
     axis.text = element_text(size = 25),
     # Change tick mark label size
-    axis.title = element_text(size = 25, face = "bold"),
+    axis.title = element_text(size = 22, face = "bold"),
     axis.text.x = element_text(
       angle = 90,
       hjust = 1,
