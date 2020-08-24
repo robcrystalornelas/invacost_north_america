@@ -2,10 +2,14 @@
 #written by Emma J Hudgins, Aug 11 2020
 
 source("filtering_and_cleaning_data.R")
+
 library(countrycode)
 library(wbstats)
+library(invacost)
 data<-expanded_observed_and_high_and_country
+
 data$Species<-gsub("spp.","sp.", data$Species) # 51 species + Diverse/Unspecified, several not resolved to the species level
+
 
 pathways<-read.csv('intro_pathways_vectors_all.csv')
 colnames(pathways)[1]<-"Species"
@@ -46,28 +50,33 @@ data$RD<-Inv_res_dev$GB.XPD.RSDV.GD.ZS[match(data$codes2, Inv_res_dev$iso3c)]
 
 
 ### Import sTwist ###
-stwist<-read.table('scripts/AlienSpecies_MultipleDBs_Masterfile_vs2.3.csv', header=T)
+stwist<-read.table('AlienSpecies_MultipleDBs_Masterfile_vs2.3.csv', header=T)
 colnames(stwist)[3]<-'Species'
 colnames(stwist)[1]<-"Official_country"
 stwist$Official_country<-gsub("United States of America", "USA", stwist$Official_country)
 stwist<-subset(stwist, Official_country%in%data$Official_country)
-length(unique(stwist$Species[which(stwist$eventDat>=1970)]))
+length(unique(stwist$Species[which(stwist$eventDate>=1970)]))
+stwist$eventDate<-as.numeric(stwist$eventDate)
 hist(subset(stwist$eventDate, stwist$eventDate>1800), xlim=c(1800,2040), breaks=20, xlab="sTwist year of first record", main=NULL) #32 before 1800
 #Completeness of invacost based on stwist 14754 total species
  # 51 species + Diverse/Unspecified, several not resolved to the species level
 library(vioplot)
+library(viridis)
 stwist_s<-subset(stwist, eventDate>=1800)
-vioplot(stwist_s$eventDate~stwist_s$code, col=viridis(4), outer=T, horizontal=T) #32 before 1800
+length(which(stwist$eventDate<1800))
+vioplot(stwist_s$eventDate~stwist_s$Official_country, col=viridis(4), outer=T, horizontal=T) #32 before 1800
 title(xlab="sTwist year of first record")
-vioplot(data$Impact_year~data$codes2, col=viridis(4), outer=T,  horizontal=T) #32 before 1800
+data<-subset(data, Impact_year)
+vioplot(data$Impact_year~data$Official_country, col=viridis(4), outer=T,  horizontal=T) #32 before 1800
 points(y=rep(2,3),x=c(data$Impact_year[which(data$codes2=="CUB")]), bg=viridis(4)[2], pch=21, col="black")
 title(xlab="Invacost impact year")
 
-table(stwist$code)
-data2<-aggregate(data, by=list(data$Species, data$codes2),FUN =  unique)
+table(stwist$Official_country)
+data2<-aggregate(data, by=list(data$Species, data$Official_country),FUN =  unique)
 table(data2$codes2)
 table(stwist$eventDate)
 length(which(stwist$Species%in%data$Species))/length(unique(stwist$Species))
+length(unique(stwist$Species[which(is.na(stwist$eventDate)==T)]))
 
 
 stwist_intros<-subset(stwist,establishmentMeans%in%c("introduced" ,   "introduced; uncertain"  ,"introduced; vagrant" ,"introduced; uncertain; vagrant", "introduced; NA","introduced; ; NA"  ,"NA; introduced"))
@@ -76,7 +85,7 @@ n_intro<-stwist_intros %>%group_by(Species)%>%summarise_all(length)
 
 clip_spp<-merge(stwist, data, by=c("Species", "Official_country"), all=T)
 codes<-countrycode(clip_spp$Official_country, 'country.name', 'iso3c')
-countrydat<-readRDS('scripts/CountriesDataPop.rds')
+countrydat<-readRDS('CountriesDataPop.rds')
 countrydat$NAME<-gsub("United States", "USA", countrydat$NAME)
 countrydat<-subset(countrydat,  NAME%in%data$Official_country)
 codes2<-countrycode(countrydat$NAME, 'country.name', 'iso3c')
@@ -87,7 +96,7 @@ clip_spp4<-clip_spp2%>%group_by(Species, Official_country)%>%summarise_if(is.num
 range_prop<-range_size<-0
 for (i in 1:length(unique(clip_spp4$Species)))
 {
-  sub<-subset(clip_spp, Species==unique(clip_spp4$Species)[i])
+  sub<-subset(clip_spp, Species==unique(clip_spp$Species)[i])
   range_prop[i]<-sum(sub$Area[which(is.na(sub$cost_bil)==F)], na.rm=T)/sum(sub$Area, na.rm=T)
   range_size[i]<-sum(sub$Area, na.rm=T)
   
@@ -99,14 +108,17 @@ data$range_prop<-range_prop$range_prop[match(data$Species, range_prop$Species)]
 data$n_intro<-n_intro$Official_country[match(data$Species, n_intro$Species)]
 
 mean(range_prop[match(unique(data$Species),range_prop$Species),1]) #79.90% complete within iso3c codes when reported
+which(range_size$range_size==max(range_size$range_size)) # how many species continent-wide invaders? 
+range_size_stwist<-clip_spp%>%group_by(Species)%>%summarise_at("Area", sum)
+which(range_size_stwist$Area==max(range_size_stwist$Area))
 mean(as.numeric(unlist(n_intro[match(unique(data$Species),n_intro$Species),2])), na.rm=T) #when known, 2.22 independent introductions 
 length(which(is.na(unlist(n_intro[match(unique(data$Species),n_intro$Species),2]))==T)) #16 unknown
 
 data_stwist<-merge(data,stwist, by=c("Species", "Official_country"), all.x=T)#not super complete, but might be worth exploring
 
-# write.csv(data, file="NAm_data_econ_origin.csv", row.names=F)
-# write.csv(path_dat, file="NAm_pathways.csv", row.names=F)
-# write.csv(data_stwist, file="NAm_data_stwist.csv", row.names=F)
+ # write.csv(data, file="NAm_data_econ_origin.csv", row.names=F)
+ # write.csv(path_dat, file="NAm_pathways.csv", row.names=F)
+ # write.csv(data_stwist, file="NAm_data_stwist.csv", row.names=F)
 
 
 spp_path<-read.csv('../../../../Dropbox/InvaCost Workshop France/Projects/Activity Sector/intro_pathways_cabi_v3.csv')
