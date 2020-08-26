@@ -13,14 +13,17 @@ raw.costs <- calculateRawAvgCosts(expanded_observed_and_high_and_country,
                                   maximum.year = 2017)
 raw.costs
 
+plot_north_america_over_time <- plot(raw.costs)
 plot_north_america_over_time <- plot_north_america_over_time + xlab("Year") +
   ylab("Average annual cost of invasions in US$ millions") +
-  scale_x_continuous(breaks = raw_costs_north_america$year.breaks) + # X axis breaks
+  scale_x_continuous(breaks = raw.costs$year.breaks) + # X axis breaks
   theme_cowplot() + # Minimal theme
   scale_y_log10(breaks = 10^(-15:15), # y axis in log 10 with pretty labels
                 labels = scales::comma) +
   annotation_logticks(sides = "l") +
-  ggtitle("North America")+
-  theme(plot.title = element_text(hjust = 0.5))
-
+  theme(axis.text = element_text(size = 25),
+        # Change tick mark label size
+        axis.title = element_text(size = 25, face = "bold"),
+        strip.text = element_text(size = 25))
 plot_north_america_over_time
+dev.off()
