@@ -4,15 +4,12 @@ library(ggplot2)
 library(invacost)
 
 # Bring in invacost data
-<<<<<<< HEAD
- data(invacost) # Importing directly from the new invacost package
- dim(invacost)
+ # data(invacost) # Importing directly from the new invacost package
+ # dim(invacost)
 # unique(invacost$Official_country)
-=======
 #data(invacost) # Importing directly from the new invacost package
-invacost<-read.csv('~/Downloads/usa_clean_and_other_countries_combined.csv') # Jean's cleaned USA + other data
+invacost<-read.csv('data/usa_clean_and_other_countries_combined.csv') # Jean's cleaned USA + other data
 
->>>>>>> 9c66994b46bc274393d2c7461ceb5a93a1db893e
 # Subset only the observations in North America
 # north_america_non_expanded <-
 #   invacost[invacost$Official_country %in% c(
