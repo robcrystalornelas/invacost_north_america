@@ -233,3 +233,18 @@ spp_viz <-
   ))
 spp_viz$sizingPolicy$viewer$fill <- FALSE
 spp_viz
+=======
+gdp_viz<-sankeyNetwork(Links = links, Nodes = nodes, Source = "IDsource", Target = "IDtarget", Value = "value", NodeID = "name", LinkGroup='origin', colourScale = my_color2c, fontSize = 12, ) #plot by cost, scaled by country gdp
+gdp_viz<-prependContent(gdp_viz, tags$div("Cost Flows", style=("font-family: Helvetica; font-size:12; text-align: center")) )
+gdp_viz$sizingPolicy$viewer$fill <- FALSE
+gdp_viz
+
+
+spp_viz<-sankeyNetwork(Links = links, Nodes = nodes, Source = "IDsource", Target = "IDtarget", Value = "value2", NodeID = "name", LinkGroup="origin", colourScale = my_color2c, fontSize = 12) #plot by species
+spp_viz<-prependContent(spp_viz, tags$div("Species Flows", style=("font-family: Helvetica; font-size:12; text-align: center")) )
+spp_viz$sizingPolicy$viewer$fill <- FALSE
+spp_viz
+
+
+     
+>>>>>>> 3e2796653f176bcc7e080a93d71cee287e512c30
