@@ -42,7 +42,7 @@ cuba_data<-
     "Cuba"),]
 sum(cuba_data$cost_bil)
 dim(plyr::count(unique(cuba_data$Reference_ID)))
-sum(cuba_data$cost_bil)/8 # cost is 18 billion per paper
+sum(cuba_data$cost_bil)/1 # cost is 18 billion per paper
 
 
 # read in research effort data

@@ -44,9 +44,11 @@ expanded <- expanded[!is.na(expanded$cost),]
 # Now, move costs into "billions of dollars" unit
 expanded$cost_bil <- (expanded$cost/1000000000)
 
+# Estimates if we include only country + all other scales
+sum(expanded$cost_bil)
+dim(expanded)
 # Retain only "country scale" data
 expanded_country <- expanded[expanded$Spatial_scale2 %in% c("Country"),]
-
 # This is the totoal economic impact from invasive species from all country-level data
 sum(expanded_country$cost_bil)
 dim(expanded_country)
@@ -54,11 +56,13 @@ dim(expanded_country)
 # Keep only measurements that are "observed" and "high quality"
 expanded_observed_and_country <- expanded_country[expanded_country$Implementation %in% c("Observed"),]
 dim(expanded_observed_and_country)
+sum(expanded_observed_and_country$cost_bil)
+
 expanded_observed_and_high_and_country <- expanded_observed_and_country[expanded_observed_and_country$Method_reliability %in% c("High"),]
 dim(expanded_observed_and_high_and_country)
 
 # This is the amount of costs that are 
 sum(expanded_observed_and_high_and_country$cost_bil)
+dim(expanded_observed_and_high_and_country)
 
-
-
+write.csv(expanded_observed_and_high_and_country, "neobiota_submission/robust_dataset.csv")
