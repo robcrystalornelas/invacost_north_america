@@ -1,0 +1,5 @@
+country,search_terms,google_search,research_effort_as_expenditure_in_R_and_D_in_percent_GDP,GDP_in_current_USD,Research_effort_as_expenditure_in_R_and_D_in_current _USD
+Canada,"""Canada"" AND ""biological invasions"" OR ""invasion science"" OR ""invasive species""",18000,1.67165,1.64988E+12,27580186493
+Cuba,"""Cuba"" AND ""biological invasions"" OR ""invasion science"" OR ""invasive species""",15100,0.43066,96851000000,417098516.6
+Mexico,"""Mexico"" AND ""biological invasions"" OR ""invasion science"" OR ""invasive species""",17900,0.32829,1.15774E+12,3800732138
+USA,"USA OR ""United States"" AND ""biological invasions"" OR ""invasion science"" OR ""invasive species""",18100,2.81741,1.94854E+13,5.48983E+11
