@@ -8,7 +8,7 @@ library(invacost)
  # dim(invacost)
 # unique(invacost$Official_country)
 #data(invacost) # Importing directly from the new invacost package
-invacost<-read.csv('data/usa_clean_and_other_countries_combined.csv') # Jean's cleaned USA + other data
+invacost<-read.csv('data/north_america_invacost_final.csv') # Jean's cleaned USA + other data
 
 # Subset only the observations in North America
 # north_america_non_expanded <-
@@ -27,8 +27,9 @@ invacost<-read.csv('data/usa_clean_and_other_countries_combined.csv') # Jean's c
 # write.csv(north_america_non_expanded, "data/north_america_non_expanded.csv")
 
 # Import USA & rest of north america data file
-north_america_invacost_data <- read.csv("data/usa_clean_and_other_countries_combined.csv", header = TRUE)
+north_america_invacost_data <- read.csv("data/north_america_invacost_final.csv", header = TRUE)
 dim(north_america_invacost_data)
+north_america_invacost_data<-subset(north_america_invacost_data, is.na(Probable_starting_year_low_margin)==F&is.na(Probable_ending_year_low_margin)==F)
 
 # First, if we want to do any temporal trend analyses, we've got to separate out impacts for each year they occurred
 expanded <- expandYearlyCosts(north_america_invacost_data,
@@ -65,4 +66,4 @@ dim(expanded_observed_and_high_and_country)
 sum(expanded_observed_and_high_and_country$cost_bil)
 dim(expanded_observed_and_high_and_country)
 
-write.csv(expanded_observed_and_high_and_country, "neobiota_submission/robust_dataset.csv")
+#write.csv(expanded_observed_and_high_and_country, "neobiota_submission/robust_dataset.csv")

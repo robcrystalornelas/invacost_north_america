@@ -10,7 +10,7 @@ library(invacost)
 data<-expanded_observed_and_high_and_country
 
 data$Species<-gsub("spp.","sp.", data$Species) # 51 species + Diverse/Unspecified, several not resolved to the species level
-
+data$Species<-gsub("Aedes.*", "Aedes aegypti albopictus", data$Species)
 pathways<-read.csv('scripts/intro_pathways_vectors_all.csv')
 
 colnames(pathways)[1]<-"Species"
@@ -57,9 +57,12 @@ colnames(stwist)[3]<-'Species'
 colnames(stwist)[1]<-"Official_country"
 stwist$Official_country<-gsub("United States of America", "USA", stwist$Official_country)
 stwist<-subset(stwist, Official_country%in%data$Official_country)
-
+library(taxize)
+data$Species_gbif<-gbif_parse(data$Species)$canonicalname
+stwist<-subset(stwist, grepl("established",stwist$degreeOfEstablishment))
+stwist$Species_gbif<-gbif_parse(stwist$Species)$canonicalname
 # stwist$eventDate<-as.numeric(as.character(stwist$eventDate))
-length(unique(stwist$Species[which(stwist$eventDate>=1970)]))
+length(unique(stwist$Species_gbif[which(stwist_est$eventDate>=1970)])) #114
 stwist$eventDate<-as.numeric(stwist$eventDate)
 hist(subset(stwist$eventDate, stwist$eventDate>1800), xlim=c(1800,2040), breaks=20, xlab="sTwist year of first record", main=NULL) #32 before 1800
 #Completeness of invacost based on stwist 14754 total species
@@ -68,10 +71,11 @@ library(vioplot)
 library(viridis)
 stwist_s<-subset(stwist, eventDate>=1800)
 length(which(stwist$eventDate<1800))
-vioplot(stwist_s$eventDate~stwist_s$Official_country, col=viridis(4), outer=T, horizontal=T) #32 before 1800
+vioplot(stwist_s$eventDate~stwist_s$Official_country, col=viridis(5), outer=T, horizontal=T, cex.axis=0.75) #32 before 1800
 title(xlab="sTwist year of first record")
-vioplot(data$Impact_year~data$Official_country, col=viridis(4), outer=T,  horizontal=T) #32 before 1800
-points(y=rep(2,3),x=c(data$Impact_year[which(data$codes2=="CUB")]), bg=viridis(4)[2], pch=21, col="black")
+vioplot(data$Impact_year~data$Official_country, col=viridis(5), outer=T,  horizontal=T, cex.axis=0.75) #32 before 1800
+points(y=rep(2,3),x=c(data$Impact_year[which(data$codes2=="CUB")]), bg=viridis(5)[2], pch=21, col="black")
+points(y=rep(3,2),x=c(data$Impact_year[which(data$codes2=="DOM")]), bg=viridis(5)[3], pch=21, col="black")
 title(xlab="Invacost impact year")
 
 table(stwist$Official_country)
@@ -83,61 +87,63 @@ length(unique(stwist$Species[which(is.na(stwist$eventDate)==T)]))
 
 
 stwist_intros<-subset(stwist,establishmentMeans%in%c("introduced" ,   "introduced; uncertain"  ,"introduced; vagrant" ,"introduced; uncertain; vagrant", "introduced; NA","introduced; ; NA"  ,"NA; introduced"))
-n_intro<-stwist_intros %>%group_by(Species)%>%summarise_all(length)
+n_intro<-stwist_intros %>%group_by(Species_gbif)%>%summarise_all(length)
 
-
-clip_spp<-merge(stwist, data, by=c("Species", "Official_country"), all=T)
+data<-subset(data, is.na(Species_gbif)==F)
+clip_spp<-merge(stwist, data, by=c("Species_gbif", "Official_country"), all=T)
 codes<-countrycode(clip_spp$Official_country, 'country.name', 'iso3c')
 countrydat<-readRDS('scripts/CountriesDataPop.rds')
 countrydat$NAME<-gsub("United States", "USA", countrydat$NAME)
+countrydat$NAME<-gsub("Dominican Rep.", "Dominican Republic", countrydat$NAME)
 countrydat<-subset(countrydat,  NAME%in%data$Official_country)
 codes2<-countrycode(countrydat$NAME, 'country.name', 'iso3c')
 clip_spp$Area<-countrydat$area_sqkm[match(codes,codes2)]
 #probably actually want area of region rather than country
-clip_spp2<-subset(clip_spp, Species%in%data$Species)
-clip_spp4<-clip_spp2%>%group_by(Species, Official_country)%>%summarise_if(is.numeric, max)
+clip_spp2<-subset(clip_spp, Species_gbif%in%data$Species_gbif)
+clip_spp4<-clip_spp2%>%group_by(Species_gbif, Official_country)%>%summarise_if(is.numeric, max)
 range_prop<-range_size<-n_countries<-0
-for (i in 1:length(unique(clip_spp4$Species)))
+for (i in 1:length(unique(clip_spp4$Species_gbif)))
 {
-  sub<-subset(clip_spp4, Species==unique(clip_spp4$Species)[i])
+  sub<-subset(clip_spp4, Species_gbif==unique(clip_spp4$Species_gbif)[i])
   range_prop[i]<-sum(sub$Area[which(is.na(sub$cost_bil)==F)], na.rm=T)/sum(sub$Area, na.rm=T)
   range_size[i]<-sum(sub$Area, na.rm=T)
   n_countries[i]<-length(unique(sub$Official_country))
 }
-range_size<-data.frame(range_size, Species=unlist(unique(clip_spp4$Species)))
-range_prop<-data.frame(range_prop, Species=unlist(unique(clip_spp4$Species)))
-data$range_size<-range_size$range_size[match(data$Species, range_size$Species)]
-data$range_prop<-range_prop$range_prop[match(data$Species, range_prop$Species)]
-data$n_intro<-n_intro$Official_country[match(data$Species, n_intro$Species)]
+range_size<-data.frame(range_size, Species_gbif=unlist(unique(clip_spp4$Species_gbif)))
+range_prop<-data.frame(range_prop, Species_gbif=unlist(unique(clip_spp4$Species_gbif)))
+data$range_size<-range_size$range_size[match(data$Species_gbif, range_size$Species_gbif)]
+data$range_prop<-range_prop$range_prop[match(data$Species_gbif, range_prop$Species_gbif)]
+data$n_intro<-n_intro$Official_country[match(data$Species_gbif, n_intro$Species_gbif)]
 
-mean(range_prop[match(unique(data$Species),range_prop$Species),1]) #71.5 complete within iso3c codes when reported
+mean(range_prop[match(unique(data$Species_gbif),range_prop$Species_gbif),1], na.rm=T) #71.5 complete within iso3c codes when reported
 which(range_size$range_size==max(range_size$range_size)) # how many species continent-wide invaders? 
-sum(data$cost_bil[which(data$range_size==max(data$range_size))])
-sum(data$cost_bil[which(data$range_size==max(data$range_size))]/data$range_prop[which(data$range_size==max(data$range_size))])
+sum(data$cost_bil[which(data$range_size==max(data$range_size))])-4.320112
+sum(data$cost_bil[which(data$range_size==max(data$range_size))]/data$range_prop[which(data$range_size==max(data$range_size))])-4.320112
 
-sum(data$cost_bil/data$range_prop)
-sum(data$cost_bil)
+sum(data$cost_bil/data$range_prop, na.rm=T)
+sum(data$cost_bil, na.rm=T)
 
-range_size_stwist<-clip_spp%>%group_by(Species)%>%summarise_at("Area", sum)
+range_size_stwist<-clip_spp%>%group_by(Species_gbif, Official_country)%>%summarise_at(c("Area", "Impact_year"), max)
+range_size_stwist<-range_size_stwist%>%group_by(Species_gbif)%>%summarise_at(c("Area"), sum)
 which(range_size_stwist$Area==max(range_size$range_size))
-mean(as.numeric(unlist(n_intro[match(unique(data$Species),n_intro$Species),2])), na.rm=T) #when known, 2.22 independent introductions 
-length(which(is.na(unlist(n_intro[match(unique(data$Species),n_intro$Species),2]))==T)) #16 unknown
+mean(as.numeric(unlist(n_intro[match(unique(data$Species_gbif),n_intro$Species_gbif),2])), na.rm=T) #when known, 2.22 independent introductions 
+length(which(is.na(unlist(n_intro[match(unique(data$Species_gbif),n_intro$Species_gbif),2]))==T)) #43 unknown
 
-data_stwist<-merge(data,stwist, by=c("Species", "Official_country"), all.x=T)#not super complete, but might be worth exploring
+data_stwist<-merge(data,stwist, by=c("Species_gbif", "Official_country"), all.x=T)#not super complete, but might be worth exploring
 
 # write.csv(data, file="NAm_data_econ_origin.csv", row.names=F)
 # write.csv(path_dat, file="NAm_pathways.csv", row.names=F)
 # write.csv(data_stwist, file="NAm_data_stwist.csv", row.names=F)
-
+#(n=30)
 spp_path<-read.csv('./data/intro_pathways_cabi_v3.csv')
-spp_path<-spp_path[match(spp_dat$Species, spp_path$species_list),]
+spp_path$species_list<-gsub("Aedes .*", "Aedes aegypti albopictus", spp_path$species_list)
+spp_path$Species_gbif<-gbif_parse(spp_path$species_list)$canonicalname
+spp_path<-subset(spp_path, species_list%in%unique(data$Species_gbif))
 colnames(spp_path)[1]<-"Species"
 data<-merge(data, spp_path, "Species")
 data$all_other<-rep(0, nrow(data))
 data$all_other[which(rowSums(data[,c(92:96,98)])==0)]<-1
 
-
-which(data$range_size==max(data$range_size))
 
 density<-data %>% group_by(Kingdom,Species, Impacted_sector_2, origin) %>% summarise_if(is.numeric, sum, na.rm=T)
 
@@ -208,8 +214,12 @@ my_color3 <- 'd3.scaleOrdinal() .domain(["As",      "Diverse", "NAm",     "EUR",
 my_color4 <- JS("d3.scaleOrdinal(d3.schemeCategory20);")
 
 
- my_color <- 'd3.scaleOrdinal().domain(["As",      "Diverse", "NAm",     "EUR",     "UNK" ,    "SA",      "AF",  "Authorities-Stakeholders" , "Environment" ,"Diverse/Unspecified", "Forestry" ,  "Agriculture","Fishery" , "Public and social welfare", "Health","Mixed","Pet Trade", "Forestry", "Other", "Agriculture", "Fisheries", "Health"]).range(["#FF9D6E","#00A3E1","#7D1B49","#FFAD00","#CC79A7","#56B4E9","#0072B2" , "lightgrey","lightgrey", "lightgrey","lightgrey","lightgrey","lightgrey","lightgrey","lightgrey","lightgrey","lightgrey","lightgrey","lightgrey","lightgrey","lightgrey", "lightgrey"])'
+ my_color <- 'd3.scaleOrdinal().domain(["As",      "Diverse", "NAm",     "EUR",     "UNK" ,    "SA",      "AF",  "Authorities-Stakeholders" , "Environment" ,"Diverse/Unspecified", "Forestry" ,  "Agriculture","Fishery" , "Public and social welfare", "Health","Mixed","Pet Trade", "Forestry", "Other", "Agriculture", "Fisheries", "Health"]).range(["#1B9E77", "#D95F02" ,"#7570B3", "#E7298A", "#66A61E" ,"#E6AB02", "#A6761D", "lightgrey","lightgrey", "lightgrey","lightgrey","lightgrey","lightgrey","lightgrey","lightgrey","lightgrey","lightgrey","lightgrey","lightgrey","lightgrey","lightgrey", "lightgrey"])'
 
+ 
+ plot(NULL ,xaxt='n',yaxt='n',bty='n',ylab='',xlab='', xlim=0:1, ylim=0:1)
+ legend("topleft", legend =c( "Africa","Asia",      "Diverse",      "Europe",     "North America","South America" ,"Unknown"), pch=16, pt.cex=1.5, cex=1, bty='n',
+        col = c("#A6761D", "#1B9E77", "#7570B3","#D95F02" , "#E7298A", "#E6AB02","#66A61E"), title="Continent of Origin") 
 library(htmlwidgets)
 library(htmltools)
 nodes[1:6,1]<-c('Pet Trade', 'Forestry', 'Other', 'Agriculture', 'Fisheries', 'Health')
@@ -223,8 +233,7 @@ gdp_viz <-
     NodeID = "name",
     LinkGroup = 'origin',
     colourScale = my_color,
-    margin = list("left"=100, "right"=100),
-    fontSize = 20) #plot by cost, scaled by country gdp
+    fontSize = 20,nodePadding = 20) #plot by cost, scaled by country gdp
 
 gdp_viz <-
   prependContent(gdp_viz, tags$div(
@@ -244,7 +253,7 @@ spp_viz <-
     NodeID = "name",
     LinkGroup = "origin",
  colourScale = my_color,
-    fontSize = 13,
+    fontSize = 20, nodePadding=20,
     
   ) #plot by species
 spp_viz <-
@@ -252,7 +261,7 @@ spp_viz <-
     "Species Flows",
     style = ("font-family: Helvetica; font-size:13; text-align: center")
   ))
-spp_viz$sizingPolicy$viewer$fill <- FALSE
+
 spp_viz
 
 library(shiny)
@@ -275,7 +284,7 @@ server <- shinyServer(function(input, output) {
   })
   
   #Render Sankeys
-  output$Plot1 <- renderSankeyNetwork(spp_viz)}
+  output$Plot1 <- renderSankeyNetwork(spp_viz)})
 
 # Run the application 
 shinyApp(ui = ui, server = server)
@@ -284,10 +293,9 @@ shinyApp(ui = ui, server = server)
 
 ##################### convert to pdf part2
 
-ui <- shinyUI(fluidPage(column(6,
-                               h2("Process 1", align = "center"),
+ui <- shinyUI(fluidPage(
                                uiOutput("plot1.ui")
-)
+
 
 ))
 
@@ -300,7 +308,7 @@ server <- shinyServer(function(input, output) {
   })
   
   #Render Sankeys
-  output$Plot1 <- renderSankeyNetwork(gdp_viz)}
+  output$Plot1 <- renderSankeyNetwork(gdp_viz)})
 
 # Run the application 
 shinyApp(ui = ui, server = server)
