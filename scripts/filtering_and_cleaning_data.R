@@ -3,39 +3,21 @@ library(dplyr)
 library(ggplot2)
 library(invacost)
 
-# Bring in invacost data
- # data(invacost) # Importing directly from the new invacost package
- # dim(invacost)
-# unique(invacost$Official_country)
-#data(invacost) # Importing directly from the new invacost package
-invacost<-read.csv('data/north_america_invacost_final.csv') # Jean's cleaned USA + other data
+# Import the final clean north america dataset
+north_america_invacost <- read.csv('data/north_america_invacost_final.csv', head = TRUE) 
+dim(north_america_invacost) 
+unique(north_america_invacost$Official_country)
 
-# Subset only the observations in North America
-# north_america_non_expanded <-
-#   invacost[invacost$Official_country %in% c(
-#     "Mexico",
-#     "Mexico/USA",
-#     "USA", # Possibly remove USA, because we're getting it from other paper
-#     "Cuba",
-#     "Canada",
-#     "Canada/USA"), ]
-# unique(north_america_non_expanded$Official_country)
-# dim(north_america_non_expanded)
-# north_america_non_expanded$Official_country
-# class(north_america_non_expanded$Cost_ID)
-# # Write this out as a CSV, then combine with invacost
-# write.csv(north_america_non_expanded, "data/north_america_non_expanded.csv")
+# When the start/end years got imported, they were switched to factors. Need to switch them back to integers
+#north_america_invacost$Probable_starting_year_low_margin <- as.integer(as.character(north_america_invacost$Probable_starting_year_low_margin))
+#north_america_invacost$Probable_ending_year_low_margin <- as.integer(as.character(north_america_invacost$Probable_ending_year_low_margin))
+# north_america_invacost$Probable_starting_year_low_margin
 
-# Import USA & rest of north america data file
-north_america_invacost_data <- read.csv("data/north_america_invacost_final.csv", header = TRUE)
-dim(north_america_invacost_data)
-north_america_invacost_data<-subset(north_america_invacost_data, is.na(Probable_starting_year_low_margin)==F&is.na(Probable_ending_year_low_margin)==F)
-
-# First, if we want to do any temporal trend analyses, we've got to separate out impacts for each year they occurred
-expanded <- expandYearlyCosts(north_america_invacost_data,
+# Expand the database
+expanded <- expandYearlyCosts(north_america_invacost,
                               startcolumn = "Probable_starting_year_low_margin",
                               endcolumn = "Probable_ending_year_low_margin")
-dim(expanded)
+
 # Then, only retain impacts that happened between 1960 and 2017
 expanded<-expanded %>% filter(Impact_year <= "2017")
 expanded<-expanded %>% filter(Impact_year >= "1960")
@@ -48,22 +30,25 @@ expanded$cost_bil <- (expanded$cost/1000000000)
 # Estimates if we include only country + all other scales
 sum(expanded$cost_bil)
 dim(expanded)
-# Retain only "country scale" data
-expanded_country <- expanded[expanded$Spatial_scale2 %in% c("Country"),]
-# This is the totoal economic impact from invasive species from all country-level data
-sum(expanded_country$cost_bil)
-dim(expanded_country)
 
 # Keep only measurements that are "observed" and "high quality"
-expanded_observed_and_country <- expanded_country[expanded_country$Implementation %in% c("Observed"),]
-dim(expanded_observed_and_country)
-sum(expanded_observed_and_country$cost_bil)
+expanded_observed <- expanded[expanded$Implementation %in% c("Observed"),]
+dim(expanded_observed)
+sum(expanded_observed$cost_bil)
 
-expanded_observed_and_high_and_country <- expanded_observed_and_country[expanded_observed_and_country$Method_reliability %in% c("High"),]
-dim(expanded_observed_and_high_and_country)
+expanded_potential <- expanded[expanded$Implementation %in% c("Potential"),]
+dim(expanded_potential)
+sum(expanded_potential$cost_bil)
+
+expanded_observed_and_high <- expanded_observed[expanded_observed$Method_reliability %in% c("High"),]
+dim(expanded_observed_and_high)
+
+expanded_observed_and_low <- expanded_observed[expanded_observed$Method_reliability %in% c("Low"),]
+sum(expanded_observed_and_low$cost_bil)
 
 # This is the amount of costs that are 
-sum(expanded_observed_and_high_and_country$cost_bil)
-dim(expanded_observed_and_high_and_country)
+sum(expanded_observed_and_high$cost_bil)
+dim(expanded_observed_and_high)
+write.csv(expanded_observed_and_high, "neobiota_submission/robust_dataset.csv")
+unique(expanded_observed_and_high$Official_country)
 
-#write.csv(expanded_observed_and_high_and_country, "neobiota_submission/robust_dataset.csv")

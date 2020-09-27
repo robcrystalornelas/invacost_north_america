@@ -7,7 +7,7 @@ source("scripts/filtering_and_cleaning_data.R")
 library(countrycode)
 library(wbstats)
 library(invacost)
-data<-expanded_observed_and_high_and_country
+data<-expanded_observed_and_high
 
 data$Species<-gsub("spp.","sp.", data$Species) # 51 species + Diverse/Unspecified, several not resolved to the species level
 data$Species<-gsub("Aedes.*", "Aedes aegypti albopictus", data$Species)
@@ -62,7 +62,7 @@ data$Species_gbif<-gbif_parse(data$Species)$canonicalname
 stwist<-subset(stwist, grepl("established",stwist$degreeOfEstablishment))
 stwist$Species_gbif<-gbif_parse(stwist$Species)$canonicalname
 # stwist$eventDate<-as.numeric(as.character(stwist$eventDate))
-length(unique(stwist$Species_gbif[which(stwist_est$eventDate>=1970)])) #114
+length(unique(stwist$Species_gbif[which(stwist$eventDate>=1970)])) #114
 stwist$eventDate<-as.numeric(stwist$eventDate)
 hist(subset(stwist$eventDate, stwist$eventDate>1800), xlim=c(1800,2040), breaks=20, xlab="sTwist year of first record", main=NULL) #32 before 1800
 #Completeness of invacost based on stwist 14754 total species
@@ -71,12 +71,12 @@ library(vioplot)
 library(viridis)
 stwist_s<-subset(stwist, eventDate>=1800)
 length(which(stwist$eventDate<1800))
-vioplot(stwist_s$eventDate~stwist_s$Official_country, col=viridis(5), outer=T, horizontal=T, cex.axis=0.75) #32 before 1800
-title(xlab="sTwist year of first record")
-vioplot(data$Impact_year~data$Official_country, col=viridis(5), outer=T,  horizontal=T, cex.axis=0.75) #32 before 1800
-points(y=rep(2,3),x=c(data$Impact_year[which(data$codes2=="CUB")]), bg=viridis(5)[2], pch=21, col="black")
-points(y=rep(3,2),x=c(data$Impact_year[which(data$codes2=="DOM")]), bg=viridis(5)[3], pch=21, col="black")
-title(xlab="Invacost impact year")
+comparative<-data.frame(time=c(stwist_s$eventDate,data$Impact_year), country=c(stwist_s$Official_country,data$Official_country), set=c(rep("stwist",nrow(stwist_s)),rep("invacost", nrow(data))))
+vioplot(comparative$time~comparative$set:comparative$country, col=rep(viridis(5),each=2), outer=T, horizontal=T, names=NA, xaxt="n",ylim=c(1770,2020),colMed2=rep(viridis(5),each=2),pchMed=21, colMed="black")
+title(xlab="Year")
+text(x=(2022),y=c(1:10),labels=c(28,64,1,39,1,32,32,44,121,260),cex=0.5, col=c(rep(c("darkgrey", "black"),5)) )
+legend(x=1765,y=7.5, legend=c("Canada (44%)", "Cuba (3%)", "Dominican Republic (3%)", "Mexico (16%)", "USA (47%)"),col=viridis(5), cex=0.6, pch=19, pt.cex=1.5)
+points(y=rep(5,2),x=c(data$Impact_year[which(data$codes2=="DOM")]), bg=viridis(5)[3], pch=21, col="black")
 
 table(stwist$Official_country)
 data2<-aggregate(data, by=list(data$Species, data$Official_country),FUN =  unique)
@@ -117,8 +117,8 @@ data$n_intro<-n_intro$Official_country[match(data$Species_gbif, n_intro$Species_
 
 mean(range_prop[match(unique(data$Species_gbif),range_prop$Species_gbif),1], na.rm=T) #71.5 complete within iso3c codes when reported
 which(range_size$range_size==max(range_size$range_size)) # how many species continent-wide invaders? 
-sum(data$cost_bil[which(data$range_size==max(data$range_size))])-4.320112
-sum(data$cost_bil[which(data$range_size==max(data$range_size))]/data$range_prop[which(data$range_size==max(data$range_size))])-4.320112
+sum(data$cost_bil[which(data$Species_gbif=="Columba livia")])
+sum(data$cost_bil[which(data$Species_gbif=="Columba livia")]/data$range_prop[which(data$Species_gbif=="Columba livia")])
 
 sum(data$cost_bil/data$range_prop, na.rm=T)
 sum(data$cost_bil, na.rm=T)
@@ -196,7 +196,7 @@ links$IDtarget=match(links$target, nodes$name)-1
 
 
 
-links$group<-as.numeric(factor(paste0(links$source, links$target, links$origin)))
+links$group<-as.numeric(factor(paste0(links$origin,links$source, links$target)))
 links<-links[order(links$origin),]
 links<-links %>% group_by(IDsource, IDtarget, group, Kingdom,origin) %>% summarise_if(is.numeric, sum, na.rm=T)
 
@@ -223,6 +223,7 @@ my_color4 <- JS("d3.scaleOrdinal(d3.schemeCategory20);")
 library(htmlwidgets)
 library(htmltools)
 nodes[1:6,1]<-c('Pet Trade', 'Forestry', 'Other', 'Agriculture', 'Fisheries', 'Health')
+links<-links[order(links$origin),]
 gdp_viz <-
   sankeyNetwork(
     Links = links,
@@ -231,7 +232,7 @@ gdp_viz <-
     Target = "IDtarget",
     Value = "value",
     NodeID = "name",
-    LinkGroup = 'origin',
+    LinkGroup = 'IDsource',
     colourScale = my_color,
     fontSize = 20,nodePadding = 20) #plot by cost, scaled by country gdp
 
