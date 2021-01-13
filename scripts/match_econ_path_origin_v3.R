@@ -1,7 +1,7 @@
 # code to link invacost north america data with economic predictors and CABI variables
 #written by Emma J Hudgins, Aug 11 2020
 
-source("scripts/filtering_and_cleaning_data.R")
+source("scripts/filtering_and_cleaning_data_v3.R")
 
 
 library(countrycode)
@@ -10,7 +10,7 @@ library(invacost)
 data<-expanded_observed_and_high
 
 data$Species<-gsub("spp.","sp.", data$Species) # 51 species + Diverse/Unspecified, several not resolved to the species level
-data$Species<-gsub("Aedes.*", "Aedes aegypti albopictus", data$Species)
+#data$Species<-gsub("Aedes.*", "Aedes aegypti albopictus", data$Species)
 pathways<-read.csv('scripts/intro_pathways_vectors_all.csv')
 
 colnames(pathways)[1]<-"Species"
@@ -18,8 +18,10 @@ colnames(pathways)[1]<-"Species"
 spp_dat<-data.frame(Species=unique(data$Species))
 
 path_dat<-merge(spp_dat, pathways, "Species", all.x=T)# cols 2-47 are causes, 48-76 are vectors
-colSums(pathways[,2:47]/rowSums(pathways[,2:47], na.rm=T), na.rm=T) # assuming equal breakdown across pathways for a given species
-colSums(pathways[,48:76]/rowSums(pathways[,48:76], na.rm=T), na.rm=T)
+colSums(path_dat[,2:47], na.rm=T)
+/rowSums(pathways[,2:47], na.rm=T), na.rm=T) # assuming equal breakdown across pathways for a given species
+colSums(path_dat[,48:76], na.rm=T)
+/rowSums(pathways[,48:76], na.rm=T), na.rm=T)
 #could conceivably group into smaller set of levels, aggregate similar to origin
 
 
@@ -62,7 +64,7 @@ data$Species_gbif<-gbif_parse(data$Species)$canonicalname
 stwist<-subset(stwist, grepl("established",stwist$degreeOfEstablishment))
 stwist$Species_gbif<-gbif_parse(stwist$Species)$canonicalname
 # stwist$eventDate<-as.numeric(as.character(stwist$eventDate))
-length(unique(stwist$Species_gbif[which(stwist$eventDate>=1970)])) #114
+length(unique(stwist$Species_gbif[which(stwist$eventDate>=1970)])) #113
 stwist$eventDate<-as.numeric(stwist$eventDate)
 hist(subset(stwist$eventDate, stwist$eventDate>1800), xlim=c(1800,2040), breaks=20, xlab="sTwist year of first record", main=NULL) #32 before 1800
 #Completeness of invacost based on stwist 14754 total species
@@ -74,13 +76,14 @@ length(which(stwist$eventDate<1800))
 comparative<-data.frame(time=c(stwist_s$eventDate,data$Impact_year), country=c(stwist_s$Official_country,data$Official_country), set=c(rep("stwist",nrow(stwist_s)),rep("invacost", nrow(data))))
 vioplot(comparative$time~comparative$set:comparative$country, col=rep(viridis(5),each=2), outer=T, horizontal=T, names=NA, xaxt="n",ylim=c(1770,2020),colMed2=rep(viridis(5),each=2),pchMed=21, colMed="black")
 title(xlab="Year")
-text(x=(2022),y=c(1:10),labels=c(28,64,1,39,1,32,32,44,121,260),cex=0.5, col=c(rep(c("darkgrey", "black"),5)) )
-legend(x=1765,y=7.5, legend=c("Canada (44%)", "Cuba (3%)", "Dominican Republic (3%)", "Mexico (16%)", "USA (47%)"),col=viridis(5), cex=0.6, pch=19, pt.cex=1.5)
+text(x=(2022),y=c(1:10),labels=c(29,64,2,39,1,32,33,44,118,260),cex=1, col=c(rep(c("darkgrey", "black"),5)) )
+legend(x=1762,y=7.5, legend=c("Canada (45%)", "Cuba (5%)", "Dominican Republic (3%)", "Mexico (75%)", "USA (45%)"),col=viridis(5), cex=0.7, pch=19, pt.cex=1.25)
 points(y=rep(5,2),x=c(data$Impact_year[which(data$codes2=="DOM")]), bg=viridis(5)[3], pch=21, col="black")
 
 table(stwist$Official_country)
 data2<-aggregate(data, by=list(data$Species, data$Official_country),FUN =  unique)
 table(data2$codes2)
+/table(stwist$Official_country)
 table(stwist$eventDate)
 length(which(stwist$Species%in%data$Species))/length(unique(stwist$Species))
 length(unique(stwist$Species[which(is.na(stwist$eventDate)==T)]))
@@ -144,10 +147,10 @@ spp_path<-subset(spp_path, species_list%in%unique(data$Species_gbif))
 colnames(spp_path)[1]<-"Species"
 data<-merge(data, spp_path, "Species")
 data$all_other<-rep(0, nrow(data))
-data$all_other[which(rowSums(data[,c(92:96,98)])==0)]<-1
+data$all_other[which(rowSums(data[,c(98:102)])==0)]<-1
 
 
-density<-data %>% group_by(Kingdom,Species, Impacted_sector_2, origin) %>% summarise_if(is.numeric, sum, na.rm=T)
+density<-data %>% group_by(Kingdom,Species, Impacted_sector2, origin) %>% summarise_if(is.numeric, sum, na.rm=T)
 
 
 density<-as.data.frame(density)
@@ -156,11 +159,11 @@ net[1,]<-NA
 net$pathway<-NA
 for (i in 1:nrow(density))
 {
-  names<-colnames(density[i,38:44])[which(density[i,38:44]>0)]
+  names<-colnames(density[i,c(40:44,46)])[which(density[i,c(40:44,46)]>0)]
   for (j in 1:length(names))
   {
     net<-rbind(net, setNames(cbind(density[i,], names[j]),c(colnames(density), "pathway")))
-    net[i,"cost"]<-(density[i,"cost"]*density[i, names[j]])/sum(density[i, 38:44])
+    net[i,"cost"]<-(density[i,"cost"]*density[i, names[j]])/sum(density[i, c(40:44,46)])
   }
 }
 
@@ -176,11 +179,11 @@ library(networkD3)
   net$pathway<-NA
   for (i in 1:nrow(density))
   {
-    names<-colnames(density[i,38:44])[which(density[i,38:44]>0)]
+    names<-colnames(density[i,c(40:44,46)])[which(density[i,c(40:44,46)]>0)]
     for (j in 1:length(names))
     {
       net<-rbind(net, setNames(cbind(density[i,], names[j]),c(colnames(density), "pathway")))
-      net[i,"cost"]<-(density[i,"cost"]*density[i, names[j]])/sum(density[i, 38:44])
+      net[i,"cost"]<-(density[i,"cost"]*density[i, names[j]])/sum(density[i, c(40:44,46)])
     }
   }
 
@@ -188,10 +191,15 @@ net<-net[2:nrow(net),]
 library(networkD3)
 
 net$origin[which(is.na(net$origin))]<-"UNK"
-links = data.frame(source=c(net$origin, net$pathway),target=c(net$pathway,net$Impacted_sector_2),value=net$cost, value2=1,Kingdom=net$Kingdom, origin=net$origin)
-links<-subset(links,target%in%c("Mixed", "Unspecified")==F)
-links<-subset(links, origin%in%c("Diverse", "UNK")==F)
+links = data.frame(source=c(net$origin, net$pathway),target=c(net$pathway,net$Impacted_sector2),value=net$cost, value2=1,Kingdom=net$Kingdom, origin=net$origin)
+
+links2<-subset(links,target%in%c("Mixed", "Unspecified")==F)
+links2<-subset(links2, origin%in%c("Diverse", "UNK")==F)
+links3<-subset(links,target%in%c("Mixed", "Unspecified")==T)
+links4<-subset(links, origin%in%c("Diverse", "UNK")==T)
+links<-rbind(links2,links3,links4)
 # From these flows we need to create a node data frame: it lists every entities involved in the flow
+links<-links2
 nodes=data.frame(name=c(as.character(links$source), as.character(links$target) ) %>% unique())
 links$IDsource=c(match(links$source, nodes$name)-1 )
 links$IDtarget=c(match(links$target, nodes$name)-1)
@@ -200,7 +208,7 @@ links<-links %>% group_by(origin,IDsource, IDtarget) %>% summarise_if(is.numeric
 links$origin<-mgsub(links$origin,c("AF","As","UNK","Diverse","NAm","SA","EUR") ,c("Africa", "Asia", "Unknown", "Diverse", "North America", "South America", "Europe"))
 
 
-#  my_color <- 'd3.scaleOrdinal(d3.schemeCategory20)'
+  my_color <- 'd3.scaleOrdinal(d3.schemeCategory20)'
 # 
 #  
 #  plot(NULL ,xaxt='n',yaxt='n',bty='n',ylab='',xlab='', xlim=0:1, ylim=0:1)
@@ -208,11 +216,10 @@ links$origin<-mgsub(links$origin,c("AF","As","UNK","Diverse","NAm","SA","EUR") ,
 #         col = c("#1B9E77", "#D95F02" ,"#7570B3", "#E7298A", "#66A61E" ,"#E6AB02", "#A6761D", "#1B9E77", "#D95F02" ,"#7570B3", "#E7298A", "#66A61E" ,"#E6AB02", "#A6761D"), title="Continent of Origin")
 # library(htmlwidgets)
 # library(htmltools)
- # nodes[1:7,1]<-c("Africa", "Asia", "Unknown", "Diverse", "North America", "South America", "Europe")
- # nodes[8:13,1]<-c('Agriculture','Pet Trade', 'Forestry', 'Other',  'Fishery', "Health")
-nodes[1:5,1]<-c("Africa", "Asia", "North America", "South America", "Europe")
-nodes[6:10,1]<-c('Agriculture','Pet Trade', 'Forestry','Other',  'Fishery')
-gdp_viz <-
+   nodes[1:5,1]<-c("Africa", "Asia", "North America", "South America", "Europe")
+   nodes[6:11,1]<-c('Agriculture','Pet Trade', 'Forestry', 'Other',  'Fishery', "Health")
+nodes[12:13,1]<-c("Diverse", "Unknown")
+gdp_viz<-
   sankeyNetwork(
     Links = links,
     Nodes = nodes,
