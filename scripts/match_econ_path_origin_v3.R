@@ -128,6 +128,8 @@ range_size_stwist<-range_size_stwist%>%group_by(Species_gbif)%>%summarise_at(c("
 which(range_size_stwist$Area==max(range_size$range_size))
 mean(as.numeric(unlist(n_intro[match(unique(data$Species_gbif),n_intro$Species_gbif),2])), na.rm=T) #when known, 2.22 independent introductions 
 length(which(is.na(unlist(n_intro[match(unique(data$Species_gbif),n_intro$Species_gbif),2]))==T)) #43 unknown
+length(which(is.na(unlist(n_intro[match(unique(data$Species_gbif),n_intro$Species_gbif),2]))==F)) #11 known
+
 
 data_stwist<-merge(data,stwist, by=c("Species_gbif", "Official_country"), all.x=T)#not super complete, but might be worth exploring
 
